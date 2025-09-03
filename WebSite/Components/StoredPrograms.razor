@@ -1,0 +1,189 @@
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+
+@code {
+    [Parameter]
+    public EventCallback<int[]> OnLoadProgram { get; set; }
+
+    private Dictionary<string, int[]> programs = new();
+    private int[]? selectedProgram;
+    private string? newProgramName;
+    private int[]? newProgram;
+    private string? editProgramName;
+    private int[]? editProgram;
+    private string? error;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadProgramsAsync();
+            StateHasChanged(); // Force re-render after loading
+        }
+    }
+
+    private async Task LoadProgramsAsync()
+    {
+        try
+        {
+            var json = await JS.InvokeAsync<string>("localStorage.getItem", "Programs");
+            if (!string.IsNullOrWhiteSpace(json))
+            {
+                programs = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, int[]>>(json) ?? new();
+            }
+            else
+            {
+                programs = new();
+            }
+        }
+        catch (Exception ex)
+        {
+            error = $"Error loading programs: {ex.Message}";
+        }
+    }
+
+    private async Task SaveProgramsAsync()
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(programs);
+        await JS.InvokeVoidAsync("localStorage.setItem", "Programs", json);
+    }
+
+    private async Task AddProgram()
+    {
+        if (newProgram is not null && !string.IsNullOrWhiteSpace(newProgramName))
+        {
+            programs.Add(newProgramName, newProgram);
+            newProgramName = null;
+            newProgram = null;
+            await SaveProgramsAsync();
+        }
+    }
+
+    private void StartEdit(string progName)
+    {
+        if (programs.TryGetValue(progName, out var code))
+        {
+            editProgramName = progName;
+            editProgram = code.ToArray();
+        }
+    }
+
+    private async Task SaveEdit()
+    {
+        if (editProgram is not null && editProgramName is not null)
+        {
+            programs[editProgramName] = editProgram;
+            editProgram = null;
+            await SaveProgramsAsync();
+        }
+    }
+
+    private void CancelEdit()
+    {
+        editProgramName = null;
+        editProgram = null;
+    }
+
+    private async Task DeleteProgram(string progName)
+    {
+        if (programs.ContainsKey(progName))
+        {
+            programs.Remove(progName);
+            await SaveProgramsAsync();
+        }
+    }
+    private string ProgramToString(int[] prog) => string.Join(", ", prog);
+
+    private int[]? ParseProgram(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return null;
+        try
+        {
+            return input.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(s => int.Parse(s.Trim()))
+                        .ToArray();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+}
+
+@if (!string.IsNullOrEmpty(error))
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+<h3>Stored Programs</h3>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Program</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @for (int i = 0; i < programs.Count; i++)
+        {
+            var currentIndex = i;
+            var currentProgram = programs.ElementAt(currentIndex);
+            <tr>
+                <td>@currentProgram.Key</td>
+                <td>
+                    @if (editProgramName == currentProgram.Key)
+                    {
+                        <input class="form-control" @bind="@editProgramString" />
+                    }
+                    else
+                    {
+                        @ProgramToString(currentProgram.Value)
+                    }
+                </td>
+                <td>
+                    @if (editProgramName == currentProgram.Key)
+                    {
+                        <button class="btn btn-success btn-sm me-1" @onclick="SaveEdit">Save</button>
+                        <button class="btn btn-secondary btn-sm me-1" @onclick="CancelEdit">Cancel</button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-primary btn-sm me-1" @onclick="() => StartEdit(currentProgram.Key)">Edit</button>
+                        <button class="btn btn-danger btn-sm me-1" @onclick="() => DeleteProgram(currentProgram.Key)">Delete</button>
+                        <button class="btn btn-info btn-sm" @onclick="() => LoadProgram(currentProgram.Value)">Load</button>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<h4>Add New Program</h4>
+<div class="input-group mb-3">
+    <input class="form-control" placeholder="Enter program name" @bind="@newProgramName" />
+    <input class="form-control" placeholder="Enter comma-separated integers" @bind="@newProgramString" />
+    <button class="btn btn-success" @onclick="AddProgram">Add</button>
+</div>
+
+@code {
+    private string? newProgramString
+    {
+        get => newProgram is null ? "" : ProgramToString(newProgram);
+        set => newProgram = ParseProgram(value);
+    }
+
+    private string? editProgramString
+    {
+        get => editProgram is null ? "" : ProgramToString(editProgram);
+        set => editProgram = ParseProgram(value);
+    }
+    private async Task LoadProgram(int[] program)
+    {
+        if (OnLoadProgram.HasDelegate)
+        {
+            await OnLoadProgram.InvokeAsync(program);
+        }
+    }
+}

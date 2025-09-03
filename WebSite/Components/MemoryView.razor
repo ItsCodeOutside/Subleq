@@ -1,0 +1,127 @@
+@using Subleq
+
+@code {
+    [EditorRequired]
+    [Parameter]
+    public Memory MemoryObject { get; set; }
+
+    private int[] memoryDump = [];
+    private int? editingIndex = null;
+    private int Columns = 2;
+    private string editingValue = "";
+
+    protected override void OnInitialized()
+    {
+        Console.WriteLine("MemoryView OnInitialized called.");
+        UpdateView();
+        Console.WriteLine("MemoryView initialized with memory size: " + memoryDump.Length);
+        base.OnInitialized();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        base.OnAfterRender(firstRender);
+    }
+
+    public void SetMemoryObject(Memory memory)
+    {
+        MemoryObject = memory;
+        UpdateView();
+    }
+
+    public void UpdateView()
+    {
+        memoryDump = MemoryObject.Dump();
+        StateHasChanged();
+    }
+
+    private void BeginEdit(int idx)
+    {
+        editingIndex = idx;
+        editingValue = memoryDump[idx].ToString("X8");
+    }
+
+    private async Task SaveEdit(int idx)
+    {
+        if (int.TryParse(editingValue, System.Globalization.NumberStyles.HexNumber, null, out int newValue))
+        {
+            MemoryObject.Write(idx, newValue);
+            memoryDump[idx] = newValue;
+        }
+        editingIndex = null;
+        editingValue = "";
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void CancelEdit()
+    {
+        editingIndex = null;
+        editingValue = "";
+    }
+
+    private string ToHex(int value)
+    {
+        if (value == 0) 
+            return "0";
+        return value.ToString("X8").TrimStart('0');
+    }
+}
+<h1>Memory View</h1>
+<input type="number"
+       class="form-control d-inline-block mb-2"
+       style="width:100px;"
+       min="1"
+       max="16"
+       value="@Columns"
+       @onchange="(e) => { Columns = int.Parse(e.Value.ToString()); StateHasChanged(); }"
+       />
+<div style="max-height:400px; overflow:auto; border:1px solid #ccc; padding:8px;">
+    <table class="table table-sm table-bordered memoryViewTable" style="width:100%; table-layout:fixed;">
+        <thead>
+            <tr>
+                <th style="width:60px;">Address</th>
+                @for (int col = 0; col < Columns; col++)
+                {
+                    <th style="width:70px;">+@col</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @if (memoryDump != null)
+            {
+                int rows = (memoryDump.Length + Columns - 1) / Columns;
+                for (int row = 0; row < rows; row++)
+                {
+                    int baseAddr = row * Columns;
+                    <tr>
+                        <td>@baseAddr</td>
+                        @for (int col = 0; col < Columns; col++)
+                        {
+                            int idx = baseAddr + col;
+                            if (idx < memoryDump.Length)
+                            {
+                                var isHighlighted = MemoryObject.LastWrittenAddress == idx ? "highlighted" : "";
+                                <td>
+                                    @if (editingIndex == idx)
+                                    {
+                                        <input class="@isHighlighted" @bind="editingValue" @bind:event="oninput" style="width:70px;" maxlength="8" />
+                                        <button class="btn btn-sm btn-success" @onclick="() => SaveEdit(idx)">✔</button>
+                                        <button class="btn btn-sm btn-secondary" @onclick="CancelEdit">✖</button>
+                                    }
+                                    else
+                                    {
+                                        <span class="@isHighlighted" @ondblclick="() => BeginEdit(idx)" style="cursor:pointer;">@ToHex(memoryDump[idx])</span>
+                                    }
+                                </td>
+                            }
+                            else
+                            {
+                                <td></td>
+                            }
+                        }
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>

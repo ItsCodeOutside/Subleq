@@ -1,0 +1,23 @@
+@using Subleq
+
+@code {
+    [EditorRequired]
+    [Parameter]
+    public CPU CPUObject { get; set; }
+    
+
+    protected override async Task OnInitializedAsync()
+    {
+        Console.WriteLine("CPUView OnInitialized called.");
+    }
+}
+
+<div>
+    <h1>CPU View</h1>
+    <table>
+        <tr>
+            <th>Instruction Pointer</th>
+            <td>@CPUObject.InstructionPointer</td>
+        </tr>
+    </table>
+</div>
