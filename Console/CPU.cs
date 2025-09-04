@@ -13,7 +13,7 @@ public class CPU
         InstructionPointer = 0;
     }
     public int InstructionPointer { get; private set; }
-
+    public void ClearInstructionPointer() => InstructionPointer = 0;
     public void ExecuteNextInstruction()
     {
         // The instruction pointer is the location in memory to fetch the next 

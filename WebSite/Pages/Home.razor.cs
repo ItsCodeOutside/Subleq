@@ -25,6 +25,7 @@ public partial class Home
     {
         _memory?.Reset();
         _memory?.Load(program);
+        _cpu?.ClearInstructionPointer();
         _memoryView?.UpdateView();
     }
 
