@@ -1,10 +1,11 @@
-@using Subleq
+@using Subleq.Hardware
+@using System.ComponentModel
 
 @code {
     [EditorRequired]
     [Parameter]
     public CPU CPUObject { get; set; }
-    
+
 
     protected override async Task OnInitializedAsync()
     {

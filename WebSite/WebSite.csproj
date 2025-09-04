@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Console\subleq.csproj" />
+    <ProjectReference Include="..\Hardware\Subleq.Hardware.csproj" />
   </ItemGroup>
 
 </Project>

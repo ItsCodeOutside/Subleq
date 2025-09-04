@@ -1,4 +1,4 @@
-using Subleq;
+using Subleq.Hardware;
 using WebSite.Components;
 
 namespace WebSite.Pages;

@@ -33,13 +33,21 @@
             }
             else
             {
-                programs = new();
+                await PopulateDefaultPrograms();
+                await SaveProgramsAsync();
             }
         }
         catch (Exception ex)
         {
             error = $"Error loading programs: {ex.Message}";
         }
+    }
+
+    private async Task PopulateDefaultPrograms()
+    {
+        programs = new();
+        programs.Add("ClearTarget", new[] { 6, 6, 0, 0, 0, 0, 5 });
+        programs.Add("OutputCharToConsole", new[] { 6, -1, 0, 0, 0, 0, 72 });
     }
 
     private async Task SaveProgramsAsync()
