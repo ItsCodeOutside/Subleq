@@ -21,9 +21,15 @@
     // Modal state
     private bool showAddModal = false;
     private bool showEditModal = false;
+    private bool showExportModal = false;
+    private bool showImportModal = false;
     private Memory? modalMemory;
     private string? modalProgramName;
     private bool isAddMode = false;
+    private string? exportJson;
+    private string? importJson;
+    private string? importName;
+    private string? importError;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -146,7 +152,8 @@
 {
     <div class="alert alert-danger">@error</div>
 }
-<button class="btn btn-success mb-2" @onclick="AddProgram">Add New Program</button>
+<button class="btn btn-success mb-2 me-2" @onclick="AddProgram">Add New Program</button>
+<button class="btn btn-secondary mb-2" @onclick="ShowImportModal">Import</button>
 
 <table class="table table-bordered">
     <thead>
@@ -165,8 +172,57 @@
                 <td>
                     <button class="btn btn-primary btn-sm me-1" @onclick="() => StartEdit(kvp.Key)">Edit</button>
                     <button class="btn btn-danger btn-sm me-1" @onclick="() => DeleteProgram(kvp.Key)">Delete</button>
-                    <button class="btn btn-info btn-sm" @onclick="() => LoadProgram(kvp.Value)">Load</button>
+                    <button class="btn btn-info btn-sm me-1" @onclick="() => LoadProgram(kvp.Value)">Load</button>
+                    <button class="btn btn-outline-dark btn-sm" @onclick="() => ShowExportModal(kvp.Value)">Export</button>
                 </td>
+@* Export Modal *@
+@if (showExportModal)
+{
+    <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Export Program</h5>
+                </div>
+                <div class="modal-body">
+                    <label>JSON Array</label>
+                    <textarea class="form-control" readonly rows="5">@exportJson</textarea>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CancelExport">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@* Import Modal *@
+@if (showImportModal)
+{
+    <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Import Program</h5>
+                </div>
+                <div class="modal-body">
+                    <label>Program Name</label>
+                    <input class="form-control mb-2" @bind="importName" placeholder="Enter program name" />
+                    <label>JSON Array</label>
+                    <textarea class="form-control mb-2" @bind="importJson" rows="5" placeholder="[1,2,3]"></textarea>
+                    @if (!string.IsNullOrWhiteSpace(importError))
+                    {
+                        <div class="alert alert-danger">@importError</div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" @onclick="SaveImport">Save</button>
+                    <button class="btn btn-secondary" @onclick="CancelImport">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
             </tr>
         }
     </tbody>
@@ -202,6 +258,66 @@
 }
 
 @code {
+    private void ShowExportModal(int[] prog)
+    {
+        exportJson = System.Text.Json.JsonSerializer.Serialize(prog);
+        showExportModal = true;
+    }
+
+    private void CancelExport()
+    {
+        showExportModal = false;
+        exportJson = null;
+    }
+
+    private void ShowImportModal()
+    {
+        showImportModal = true;
+        importJson = "";
+        importName = "";
+        importError = null;
+    }
+
+    private async Task SaveImport()
+    {
+        importError = null;
+        if (string.IsNullOrWhiteSpace(importName))
+        {
+            importError = "Program name is required.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(importJson))
+        {
+            importError = "JSON array is required.";
+            return;
+        }
+        try
+        {
+            var arr = System.Text.Json.JsonSerializer.Deserialize<int[]>(importJson);
+            if (arr == null)
+            {
+                importError = "Invalid JSON array.";
+                return;
+            }
+            programs[importName] = arr;
+            await SaveProgramsAsync();
+            showImportModal = false;
+            importJson = "";
+            importName = "";
+        }
+        catch (Exception ex)
+        {
+            importError = $"Error: {ex.Message}";
+        }
+    }
+
+    private void CancelImport()
+    {
+        showImportModal = false;
+        importJson = "";
+        importName = "";
+        importError = null;
+    }
     private async Task SaveAdd()
     {
         if (modalMemory != null && !string.IsNullOrWhiteSpace(modalProgramName))
