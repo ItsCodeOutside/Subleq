@@ -6,6 +6,7 @@ public class CPU
 
     public Action<int>? OnOutput { get; set; }
     public int Input { get; set; }
+    public int Output { get; set; }
 
     public CPU(Memory memory)
     {
@@ -34,7 +35,7 @@ public class CPU
                 break;
             // Output - If the minuend is -1, write to the output 'register' (Invokes the event)
             case (_, -1, _):
-                OnOutput?.Invoke(memory.Read(pointer_A));
+                Output = memory.Read(pointer_A);
                 break;
 
 

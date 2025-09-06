@@ -1,4 +1,5 @@
 ﻿using System;
+using Subleq.Hardware;
 
 namespace Subleq
 {

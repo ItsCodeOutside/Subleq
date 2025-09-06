@@ -1,5 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <ItemGroup>
+    <ProjectReference Include="..\Hardware\Subleq.Hardware.csproj" />
+  </ItemGroup>
+
   <PropertyGroup>
     <OutputType>exe</OutputType>
     <TargetFramework>net9.0</TargetFramework>

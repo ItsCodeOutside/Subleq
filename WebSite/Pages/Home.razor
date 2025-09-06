@@ -15,7 +15,7 @@
             </div>
             <div class="mb-2">
                 <button class="btn btn-primary me-2" @onclick="Step">Step</button>
-                <button class="btn btn-secondary me-2" @onclick="() => InitialiseToMemorySize(_memorySize)">Initialise</button>
+                <button class="btn btn-danger me-2" @onclick="ResetInstructionPointer">Restart IP</button>                <button class="btn btn-secondary me-2" @onclick="() => InitialiseToMemorySize(_memorySize)">Initialise</button>
                 <input type="number"
                        class="form-control d-inline-block"
                        style="width: 100px;"

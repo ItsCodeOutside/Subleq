@@ -17,11 +17,10 @@ public partial class Home
     {
         _memory = new Memory(32);
         _cpu = new CPU(_memory);
-        _cpu.OnOutput += cpu_OnOutput;
         Console.WriteLine("Home initialized");
     }
 
-    private async Task StoredPrograms_OnLoad(int[] program)
+    private void StoredPrograms_OnLoad(int[] program)
     {
         _memory?.Reset();
         _memory?.Load(program);
@@ -29,9 +28,10 @@ public partial class Home
         _memoryView?.UpdateView();
     }
 
-    private void cpu_OnOutput(int value)
+    private void ResetInstructionPointer()
     {
-        Console.Write((char)value);
+        _cpu?.ClearInstructionPointer();
+        Message = "Instruction pointer reset.";
     }
 
     private void InitialiseToMemorySize(int newMemorySize)
@@ -40,7 +40,6 @@ public partial class Home
         _memory = null;
         _memory = new Memory(newMemorySize);
         _cpu = new CPU(_memory);
-        _cpu.OnOutput += cpu_OnOutput;
         Message = $"Initialized memory to size {newMemorySize}.";
 
         _memoryView?.SetMemoryObject(_memory);
@@ -55,6 +54,7 @@ public partial class Home
         {
             _cpu.ExecuteNextInstruction();
             Message = $"Executed instruction successfully.";
+            StateHasChanged();
         }
         catch (Exception ex)
         {
