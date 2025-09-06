@@ -8,13 +8,10 @@
     public EventCallback<int[]> OnLoadProgram { get; set; }
 
     [Parameter]
-    public Memory MainMemory { get; set; } // Pass main memory from parent
+    public Memory? MainMemory { get; set; } // Pass main memory from parent
 
     private Dictionary<string, int[]> programs = new();
-    private int[]? selectedProgram;
-    private string? newProgramName;
     private int[]? newProgram;
-    private string? editProgramName;
     private int[]? editProgram;
     private string? error;
 
@@ -51,7 +48,7 @@
             }
             else
             {
-                await PopulateDefaultPrograms();
+                PopulateDefaultPrograms();
                 await SaveProgramsAsync();
             }
         }
@@ -61,7 +58,7 @@
         }
     }
 
-    private async Task PopulateDefaultPrograms()
+    private void PopulateDefaultPrograms()
     {
         programs = new();
         programs.Add("ClearTarget", new[] { 6, 6, 0, 0, 0, 0, 5 });
@@ -74,7 +71,7 @@
         await JS.InvokeVoidAsync("localStorage.setItem", "Programs", json);
     }
 
-    private async Task AddProgram()
+    private void AddProgram()
     {
             // Show modal for adding
             isAddMode = true;

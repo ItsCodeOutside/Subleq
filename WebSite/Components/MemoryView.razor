@@ -72,8 +72,7 @@
        style="width:100px;"
        min="1"
        max="16"
-       value="@Columns"
-       @onchange="(e) => { Columns = int.Parse(e.Value.ToString()); StateHasChanged(); }"
+       @bind="Columns"
        />
 <div style="max-height:400px; overflow:auto; border:1px solid #ccc; padding:8px;">
     <table class="table table-sm table-bordered memoryViewTable" style="width:100%; table-layout:fixed;">
